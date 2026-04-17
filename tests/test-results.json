@@ -1,0 +1,390 @@
+{
+  "config": {
+    "configFile": "C:\\app\\dogfooding-3-739\\tests\\playwright.config.js",
+    "rootDir": "C:/app/dogfooding-3-739/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/app/dogfooding-3-739/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/app/dogfooding-3-739/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "html-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "test_taskflow.spec.js",
+      "file": "test_taskflow.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "TaskFlow Pro 测试套件",
+          "file": "test_taskflow.spec.js",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-001 初始化验证",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-50ecd72c5edb14bd3f52",
+              "file": "test_taskflow.spec.js",
+              "line": 14,
+              "column": 3
+            },
+            {
+              "title": "TC-002 新建任务",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-79937fb7198e57f9c632",
+              "file": "test_taskflow.spec.js",
+              "line": 33,
+              "column": 3
+            },
+            {
+              "title": "TC-003 编辑任务",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-88b92bf1f3079f94a9d0",
+              "file": "test_taskflow.spec.js",
+              "line": 84,
+              "column": 3
+            },
+            {
+              "title": "TC-004 删除任务",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-e5edca6b1dc56bc9a9a7",
+              "file": "test_taskflow.spec.js",
+              "line": 110,
+              "column": 3
+            },
+            {
+              "title": "TC-005 拖拽排序",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-2988ebacf171e5facb77",
+              "file": "test_taskflow.spec.js",
+              "line": 133,
+              "column": 3
+            },
+            {
+              "title": "TC-006 搜索过滤",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-bd5a7453631dfd1ee86e",
+              "file": "test_taskflow.spec.js",
+              "line": 160,
+              "column": 3
+            },
+            {
+              "title": "TC-007 数据持久化",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-a6c42e77d0ec199f30a4",
+              "file": "test_taskflow.spec.js",
+              "line": 189,
+              "column": 3
+            },
+            {
+              "title": "TC-008 撤销操作",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-bbab5fdbf5a0b31c7a2d",
+              "file": "test_taskflow.spec.js",
+              "line": 205,
+              "column": 3
+            },
+            {
+              "title": "TC-009 子任务进度",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-8e08956421924f82f4f5",
+              "file": "test_taskflow.spec.js",
+              "line": 231,
+              "column": 3
+            },
+            {
+              "title": "TC-010 计时器",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-e2ffe48cbc3944da0f16",
+              "file": "test_taskflow.spec.js",
+              "line": 258,
+              "column": 3
+            },
+            {
+              "title": "TC-011 导出/导入",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-f067780c3461a2174c90",
+              "file": "test_taskflow.spec.js",
+              "line": 285,
+              "column": 3
+            },
+            {
+              "title": "TC-012 复制任务",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-a0574a593dfe61b58567",
+              "file": "test_taskflow.spec.js",
+              "line": 309,
+              "column": 3
+            },
+            {
+              "title": "TC-013 快捷键",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-dc6777e6551feec8f8f9",
+              "file": "test_taskflow.spec.js",
+              "line": 330,
+              "column": 3
+            },
+            {
+              "title": "TC-014 边界测试",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-c0cefd0a2d9c0888ed34",
+              "file": "test_taskflow.spec.js",
+              "line": 363,
+              "column": 3
+            },
+            {
+              "title": "TC-015 UI一致性",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "55983f1d8f0efe4cad69-5d99711ec8e719607039",
+              "file": "test_taskflow.spec.js",
+              "line": 405,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-17T11:42:53.852Z",
+    "duration": 23.908999999999992,
+    "expected": 0,
+    "skipped": 15,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
