@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow Pro - 高级任务看板</title>
+<style>
+/* ===== CSS Reset & Variables ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0f172a; --surface: #1e293b; --surface2: #334155;
+  --border: #475569; --text: #f1f5f9; --text2: #94a3b8;
+  --accent: #3b82f6; --accent2: #8b5cf6; --green: #22c55e;
+  --orange: #f97316; --red: #ef4444; --pink: #ec4899;
+  --radius: 12px; --shadow: 0 4px 24px rgba(0,0,0,.4);
+  --col-width: 320px;
+}
+html, body { height:100%; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+
+/* ===== Layout ===== */
+#app { display:flex; flex-direction:column; height:100vh; }
+header { display:flex; align-items:center; justify-content:space-between; padding:12px 24px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+header h1 { font-size:20px; font-weight:700; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.header-actions { display:flex; gap:12px; align-items:center; }
+.search-box { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; color:var(--text); width:220px; font-size:13px; outline:none; transition:border .2s; }
+.search-box:focus { border-color:var(--accent); }
+.btn { padding:6px 14px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#2563eb; transform:translateY(-1px); }
+.btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover { background:var(--surface2); }
+.btn-danger { background:var(--red); color:#fff; }
+.btn-danger:hover { background:#dc2626; }
+.btn-sm { padding:4px 8px; font-size:12px; }
+
+/* ===== Board ===== */
+.board { display:flex; gap:20px; padding:20px 24px; flex:1; overflow-x:auto; overflow-y:hidden; scroll-behavior:smooth; }
+.board::-webkit-scrollbar { height:8px; }
+.board::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
+.column { min-width:var(--col-width); max-width:var(--col-width); background:var(--surface); border-radius:var(--radius); display:flex; flex-direction:column; max-height:calc(100vh - 80px); }
+.column.drag-over { outline:2px dashed var(--accent); outline-offset:-2px; }
+.col-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; flex-shrink:0; }
+.col-title { font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.col-count { background:var(--surface2); color:var(--text2); font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+.col-actions { display:flex; gap:4px; }
+.col-body { flex:1; overflow-y:auto; padding:0 12px 12px; }
+.col-body::-webkit-scrollbar { width:4px; }
+.col-body::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:2px; }
+
+/* ===== Cards ===== */
+.card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:10px; cursor:grab; transition:all .2s; position:relative; }
+.card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow); }
+.card.dragging { opacity:.5; transform:rotate(3deg); }
+.card-labels { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
+.label { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.label-bug { background:rgba(239,68,68,.2); color:var(--red); }
+.label-feature { background:rgba(59,130,246,.2); color:var(--accent); }
+.label-urgent { background:rgba(249,115,22,.2); color:var(--orange); }
+.label-design { background:rgba(236,72,153,.2); color:var(--pink); }
+.label-perf { background:rgba(34,197,94,.2); color:var(--green); }
+.card-title { font-size:14px; font-weight:600; margin-bottom:6px; line-height:1.4; }
+.card-desc { font-size:12px; color:var(--text2); line-height:1.5; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.card-meta { display:flex; align-items:center; justify-content:space-between; }
+.card-meta-left { display:flex; align-items:center; gap:10px; }
+.priority { width:8px; height:8px; border-radius:50%; }
+.priority-high { background:var(--red); box-shadow:0 0 6px var(--red); }
+.priority-medium { background:var(--orange); }
+.priority-low { background:var(--green); }
+.card-date { font-size:11px; color:var(--text2); }
+.card-assignee { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; }
+.subtask-bar { height:4px; background:var(--surface2); border-radius:2px; margin-top:8px; overflow:hidden; }
+.subtask-fill { height:100%; border-radius:2px; transition:width .3s; }
+.card-actions { position:absolute; top:8px; right:8px; display:none; gap:4px; }
+.card:hover .card-actions { display:flex; }
+.card-action-btn { width:24px; height:24px; border:none; border-radius:6px; background:var(--surface2); color:var(--text2); cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.card-action-btn:hover { background:var(--accent); color:#fff; }
+
+/* ===== Modal ===== */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:1000; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--surface); border-radius:16px; width:520px; max-height:85vh; overflow-y:auto; box-shadow:0 24px 48px rgba(0,0,0,.5); }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid var(--border); }
+.modal-header h2 { font-size:18px; font-weight:700; }
+.modal-close { width:32px; height:32px; border:none; background:var(--surface2); color:var(--text); border-radius:8px; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:var(--red); }
+.modal-body { padding:20px 24px; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+.form-input, .form-select, .form-textarea { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-size:14px; font-family:inherit; outline:none; transition:border .2s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-select { cursor:pointer; }
+.form-row { display:flex; gap:12px; }
+.form-row .form-group { flex:1; }
+.label-picker { display:flex; gap:6px; flex-wrap:wrap; }
+.label-option { padding:4px 10px; border-radius:8px; font-size:12px; cursor:pointer; border:2px solid transparent; transition:all .15s; opacity:.6; }
+.label-option.selected { opacity:1; border-color:currentColor; }
+.subtask-list { list-style:none; }
+.subtask-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
+.subtask-item input[type="checkbox"] { accent-color:var(--accent); width:16px; height:16px; }
+.subtask-item span { flex:1; font-size:13px; }
+.subtask-item .remove-subtask { background:none; border:none; color:var(--text2); cursor:pointer; font-size:16px; }
+.subtask-item .remove-subtask:hover { color:var(--red); }
+.add-subtask-row { display:flex; gap:8px; margin-top:8px; }
+.modal-footer { display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid var(--border); }
+
+/* ===== Toast ===== */
+.toast-container { position:fixed; bottom:24px; right:24px; z-index:2000; display:flex; flex-direction:column-reverse; gap:8px; }
+.toast { padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; color:#fff; animation:slideIn .3s ease; box-shadow:var(--shadow); }
+.toast-success { background:var(--green); }
+.toast-error { background:var(--red); }
+.toast-info { background:var(--accent); }
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+/* ===== Context Menu ===== */
+.context-menu { position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:6px; min-width:180px; box-shadow:var(--shadow); z-index:1500; display:none; }
+.context-menu.active { display:block; }
+.context-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:6px; font-size:13px; cursor:pointer; color:var(--text); border:none; background:none; width:100%; text-align:left; }
+.context-item:hover { background:var(--surface2); }
+.context-item.danger { color:var(--red); }
+.context-sep { height:1px; background:var(--border); margin:4px 0; }
+
+/* ===== Stats Bar ===== */
+.stats-bar { display:flex; gap:20px; padding:8px 24px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; font-size:12px; color:var(--text2); }
+.stat-item { display:flex; align-items:center; gap:6px; }
+.stat-dot { width:6px; height:6px; border-radius:50%; }
+
+/* ===== Timer ===== */
+.timer-badge { font-size:11px; background:rgba(139,92,246,.2); color:var(--accent2); padding:2px 8px; border-radius:8px; font-weight:600; font-variant-numeric:tabular-nums; }
+.timer-badge.running { animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+
+/* ===== Drag Ghost ===== */
+.drag-ghost { position:fixed; pointer-events:none; z-index:3000; opacity:.85; transform:rotate(4deg); }
+
+/* ===== Responsive ===== */
+@media (max-width:768px) {
+  .board { padding:12px; gap:12px; }
+  .column { min-width:280px; max-width:280px; }
+  .search-box { width:140px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <header>
+    <h1>⚡ TaskFlow Pro</h1>
+    <div class="header-actions">
+      <input class="search-box" id="searchInput" placeholder="搜索任务... (Ctrl+K)" />
+      <button class="btn btn-ghost" onclick="toggleFilter()" title="筛选">🏷️ 筛选</button>
+      <button class="btn btn-ghost" onclick="exportData()" title="导出">📥 导出</button>
+      <button class="btn btn-ghost" onclick="importData()" title="导入">📤 导入</button>
+      <button class="btn btn-ghost" onclick="undo()" title="撤销 (Ctrl+Z)">↩️</button>
+      <button class="btn btn-primary" onclick="openModal()">+ 新建任务</button>
+    </div>
+  </header>
+
+  <!-- Board -->
+  <div class="board" id="board"></div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar"></div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">新建任务</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>任务标题 *</label>
+        <input class="form-input" id="taskTitle" placeholder="输入任务标题..." maxlength="100" />
+      </div>
+      <div class="form-group">
+        <label>描述</label>
+        <textarea class="form-textarea" id="taskDesc" placeholder="描述任务详情..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>优先级</label>
+          <select class="form-select" id="taskPriority">
+            <option value="low">🟢 低</option>
+            <option value="medium" selected>🟠 中</option>
+            <option value="high">🔴 高</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>截止日期</label>
+          <input class="form-input" type="date" id="taskDue" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>负责人</label>
+          <select class="form-select" id="taskAssignee">
+            <option value="">未分配</option>
+            <option value="张三">张三</option>
+            <option value="李四">李四</option>
+            <option value="王五">王五</option>
+            <option value="赵六">赵六</option>
+            <option value="孙七">孙七</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>预估工时 (h)</label>
+          <input class="form-input" type="number" id="taskEstimate" min="0" step="0.5" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>标签</label>
+        <div class="label-picker" id="labelPicker">
+          <span class="label-option label-bug" data-label="bug" onclick="toggleLabel(this)">🐛 Bug</span>
+          <span class="label-option label-feature" data-label="feature" onclick="toggleLabel(this)">✨ Feature</span>
+          <span class="label-option label-urgent" data-label="urgent" onclick="toggleLabel(this)">🔥 Urgent</span>
+          <span class="label-option label-design" data-label="design" onclick="toggleLabel(this)">🎨 Design</span>
+          <span class="label-option label-perf" data-label="perf" onclick="toggleLabel(this)">⚡ Perf</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>子任务</label>
+        <ul class="subtask-list" id="subtaskList"></ul>
+        <div class="add-subtask-row">
+          <input class="form-input" id="newSubtask" placeholder="添加子任务..." />
+          <button class="btn btn-ghost btn-sm" onclick="addSubtask()">添加</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="saveTaskBtn" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="contextMenu">
+  <button class="context-item" onclick="contextAction('edit')">✏️ 编辑</button>
+  <button class="context-item" onclick="contextAction('duplicate')">📋 复制</button>
+  <button class="context-item" onclick="contextAction('timer')">⏱️ 计时</button>
+  <div class="context-sep"></div>
+  <button class="context-item" onclick="contextAction('moveLeft')">⬅️ 移到左列</button>
+  <button class="context-item" onclick="contextAction('moveRight')">➡️ 移到右列</button>
+  <div class="context-sep"></div>
+  <button class="context-item danger" onclick="contextAction('delete')">🗑️ 删除</button>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)" />
+
+<script>
+// ===== Data Layer =====
+const COLUMNS = [
+  { id:'backlog', title:'📋 待办', color:'var(--text2)' },
+  { id:'todo', title:'📌 计划中', color:'var(--accent)' },
+  { id:'inprogress', title:'🚀 进行中', color:'var(--orange)' },
+  { id:'review', title:'🔍 审核中', color:'var(--accent2)' },
+  { id:'done', title:'✅ 已完成', color:'var(--green)' }
+];
+
+const ASSIGNEE_COLORS = {
+  '张三':'#3b82f6','李四':'#8b5cf6','王五':'#22c55e','赵六':'#f97316','孙七':'#ec4899'
+};
+
+let state = {
+  tasks: [],
+  history: [], // undo stack
+  filter: { labels:[], priority:null, search:'' },
+  activeTimers: {}, // taskId -> { start, elapsed }
+  editingId: null,
+  contextTaskId: null,
+  dragTaskId: null,
+  nextId: 1
+};
+
+// ===== Persistence =====
+function save() {
+  try {
+    const data = { tasks:state.tasks, nextId:state.nextId, timers:state.activeTimers };
+    localStorage.setItem('taskflow-pro', JSON.stringify(data));
+  } catch(e) { console.warn('Save failed:', e); }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem('taskflow-pro');
+    if (raw) {
+      const data = JSON.parse(raw);
+      state.tasks = data.tasks || [];
+      state.nextId = data.nextId || 1;
+      state.activeTimers = data.timers || {};
+    }
+  } catch(e) { console.warn('Load failed:', e); }
+}
+
+// ===== History (Undo) =====
+function pushHistory() {
+  state.history.push(JSON.parse(JSON.stringify(state.tasks)));
+  if (state.history.length > 50) state.history.shift();
+}
+function undo() {
+  if (!state.history.length) return toast('没有可撤销的操作','info');
+  state.tasks = state.history.pop();
+  save(); render();
+  toast('已撤销','info');
+}
+
+// ===== CRUD =====
+function createTask(data) {
+  pushHistory();
+  const task = {
+    id: state.nextId++,
+    title: data.title,
+    desc: data.desc || '',
+    column: data.column || 'backlog',
+    priority: data.priority || 'medium',
+    labels: data.labels || [],
+    assignee: data.assignee || '',
+    due: data.due || '',
+    estimate: data.estimate || 0,
+    subtasks: data.subtasks || [],
+    createdAt: Date.now(),
+    order: state.tasks.filter(t=>t.column===(data.column||'backlog')).length
+  };
+  state.tasks.push(task);
+  save(); render();
+  return task;
+}
+
+function updateTask(id, updates) {
+  pushHistory();
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  Object.assign(task, updates);
+  save(); render();
+}
+
+function deleteTask(id) {
+  pushHistory();
+  state.tasks = state.tasks.filter(t=>t.id!==id);
+  delete state.activeTimers[id];
+  save(); render();
+}
+
+function moveTask(id, toColumn, toIndex) {
+  pushHistory();
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  const fromCol = task.column;
+  task.column = toColumn;
+  // reorder
+  const colTasks = state.tasks.filter(t=>t.column===toColumn && t.id!==id)
+    .sort((a,b)=>a.order-b.order);
+  colTasks.splice(toIndex, 0, task);
+  colTasks.forEach((t,i)=>t.order=i);
+  save(); render();
+  if (fromCol !== toColumn) toast(`移动到 ${COLUMNS.find(c=>c.id===toColumn).title}`,'success');
+}
+
+// ===== Timer =====
+function toggleTimer(id) {
+  if (state.activeTimers[id]) {
+    state.activeTimers[id].elapsed += Date.now() - state.activeTimers[id].start;
+    state.activeTimers[id].start = null;
+    save(); render();
+    toast('计时已暂停','info');
+  } else {
+    state.activeTimers[id] = { start:Date.now(), elapsed:0 };
+    save(); render();
+    toast('开始计时','success');
+  }
+}
+
+function getTimerDisplay(id) {
+  const timer = state.activeTimers[id];
+  if (!timer) return null;
+  let ms = timer.elapsed;
+  if (timer.start) ms += Date.now() - timer.start;
+  const sec = Math.floor(ms/1000);
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = sec%60;
+  return { text:`${h>0?h+'h ':''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`, running:!!timer.start };
+}
+
+// ===== Filtering =====
+function getFilteredTasks() {
+  return state.tasks.filter(t => {
+    if (state.filter.search) {
+      const q = state.filter.search.toLowerCase();
+      if (!t.title.toLowerCase().includes(q) && !t.desc.toLowerCase().includes(q) && !t.assignee.toLowerCase().includes(q)) return false;
+    }
+    if (state.filter.labels.length && !state.filter.labels.some(l=>t.labels.includes(l))) return false;
+    if (state.filter.priority && t.priority !== state.filter.priority) return false;
+    return true;
+  });
+}
+
+// ===== Rendering =====
+function render() {
+  const board = document.getElementById('board');
+  const filtered = getFilteredTasks();
+
+  board.innerHTML = COLUMNS.map(col => {
+    const colTasks = filtered.filter(t=>t.column===col.id).sort((a,b)=>a.order-b.order);
+    return `
+      <div class="column" data-column="${col.id}"
+           ondragover="onDragOver(event)" ondrop="onDrop(event,'${col.id}')"
+           ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)">
+        <div class="col-header">
+          <span class="col-title">${col.title} <span class="col-count">${colTasks.length}</span></span>
+          <div class="col-actions">
+            <button class="btn btn-ghost btn-sm" onclick="quickAdd('${col.id}')" title="快速添加">+</button>
+          </div>
+        </div>
+        <div class="col-body">
+          ${colTasks.map(t=>renderCard(t)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  renderStats(filtered);
+  updateTimerDisplays();
+}
+
+function renderCard(task) {
+  const timer = getTimerDisplay(task.id);
+  const doneSubtasks = task.subtasks.filter(s=>s.done).length;
+  const totalSubtasks = task.subtasks.length;
+  const progress = totalSubtasks ? (doneSubtasks/totalSubtasks*100) : 0;
+  const isOverdue = task.due && new Date(task.due) < new Date() && task.column !== 'done';
+  const progressColor = progress===100?'var(--green)':progress>50?'var(--accent)':'var(--orange)';
+
+  return `
+    <div class="card" draggable="true" data-id="${task.id}"
+         ondragstart="onDragStart(event,${task.id})" ondragend="onDragEnd(event)"
+         oncontextmenu="showContext(event,${task.id})" ondblclick="editTask(${task.id})">
+      <div class="card-actions">
+        <button class="card-action-btn" onclick="editTask(${task.id})" title="编辑">✏️</button>
+        <button class="card-action-btn" onclick="toggleTimer(${task.id})" title="计时">⏱️</button>
+      </div>
+      ${task.labels.length?`<div class="card-labels">${task.labels.map(l=>`<span class="label label-${l}">${labelText(l)}</span>`).join('')}</div>`:''}
+      <div class="card-title">${esc(task.title)}</div>
+      ${task.desc?`<div class="card-desc">${esc(task.desc)}</div>`:''}
+      <div class="card-meta">
+        <div class="card-meta-left">
+          <span class="priority priority-${task.priority}" title="${task.priority}"></span>
+          ${task.due?`<span class="card-date" style="${isOverdue?'color:var(--red)':''}">${isOverdue?'⚠️ ':''}${formatDate(task.due)}</span>`:''}
+          ${timer?`<span class="timer-badge ${timer.running?'running':''}" data-timer="${task.id}">${timer.text}</span>`:''}
+          ${totalSubtasks?`<span class="card-date">${doneSubtasks}/${totalSubtasks}</span>`:''}
+        </div>
+        ${task.assignee?`<div class="card-assignee" style="background:${ASSIGNEE_COLORS[task.assignee]||'var(--surface2)'}" title="${task.assignee}">${task.assignee[0]}</div>`:''}
+      </div>
+      ${totalSubtasks?`<div class="subtask-bar"><div class="subtask-fill" style="width:${progress}%;background:${progressColor}"></div></div>`:''}
+    </div>`;
+}
+
+function renderStats(filtered) {
+  const total = state.tasks.length;
+  const done = state.tasks.filter(t=>t.column==='done').length;
+  const inProgress = state.tasks.filter(t=>t.column==='inprogress').length;
+  const overdue = state.tasks.filter(t=>t.due && new Date(t.due)<new Date() && t.column!=='done').length;
+  const totalEstimate = state.tasks.reduce((s,t)=>s+(t.estimate||0),0);
+  const activeTimerCount = Object.values(state.activeTimers).filter(t=>t.start).length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <span class="stat-item"><span class="stat-dot" style="background:var(--text2)"></span>总计 ${total}</span>
+    <span class="stat-item"><span class="stat-dot" style="background:var(--green)"></span>完成 ${done}${total?` (${Math.round(done/total*100)}%)`:''}</span>
+    <span class="stat-item"><span class="stat-dot" style="background:var(--orange)"></span>进行中 ${inProgress}</span>
+    ${overdue?`<span class="stat-item"><span class="stat-dot" style="background:var(--red)"></span>逾期 ${overdue}</span>`:''}
+    <span class="stat-item">⏱ 预估 ${totalEstimate}h</span>
+    ${activeTimerCount?`<span class="stat-item"><span class="stat-dot" style="background:var(--accent2);animation:pulse 2s infinite"></span>计时中 ${activeTimerCount}</span>`:''}
+    ${filtered.length!==total?`<span class="stat-item">🔍 筛选显示 ${filtered.length}/${total}</span>`:''}
+  `;
+}
+
+// ===== Timer Live Update =====
+let timerInterval;
+function updateTimerDisplays() {
+  clearInterval(timerInterval);
+  const hasRunning = Object.values(state.activeTimers).some(t=>t.start);
+  if (hasRunning) {
+    timerInterval = setInterval(()=>{
+      document.querySelectorAll('[data-timer]').forEach(el=>{
+        const id = parseInt(el.dataset.timer);
+        const timer = getTimerDisplay(id);
+        if (timer) el.textContent = timer.text;
+      });
+    }, 1000);
+  }
+}
+
+// ===== Drag & Drop =====
+function onDragStart(e, id) {
+  state.dragTaskId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+  // transparent drag image
+  const ghost = e.target.cloneNode(true);
+  ghost.style.width = e.target.offsetWidth+'px';
+  ghost.classList.add('drag-ghost');
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, 20, 20);
+  setTimeout(()=>ghost.remove(), 0);
+}
+function onDragEnd(e) {
+  state.dragTaskId = null;
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.column').forEach(c=>c.classList.remove('drag-over'));
+}
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect='move'; }
+function onDragEnter(e) { e.preventDefault(); e.currentTarget.closest('.column')?.classList.add('drag-over'); }
+function onDragLeave(e) {
+  const col = e.currentTarget.closest('.column');
+  if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+}
+function onDrop(e, colId) {
+  e.preventDefault();
+  document.querySelectorAll('.column').forEach(c=>c.classList.remove('drag-over'));
+  if (!state.dragTaskId) return;
+  // figure out drop index
+  const colBody = e.currentTarget.querySelector('.col-body');
+  const cards = [...colBody.querySelectorAll('.card')];
+  let idx = cards.length;
+  for (let i=0; i<cards.length; i++) {
+    const rect = cards[i].getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height/2) { idx=i; break; }
+  }
+  moveTask(state.dragTaskId, colId, idx);
+}
+
+// ===== Context Menu =====
+function showContext(e, id) {
+  e.preventDefault();
+  state.contextTaskId = id;
+  const menu = document.getElementById('contextMenu');
+  menu.style.left = e.clientX+'px';
+  menu.style.top = e.clientY+'px';
+  menu.classList.add('active');
+}
+document.addEventListener('click', ()=>{
+  document.getElementById('contextMenu').classList.remove('active');
+});
+
+function contextAction(action) {
+  const id = state.contextTaskId;
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  switch(action) {
+    case 'edit': editTask(id); break;
+    case 'duplicate':
+      const dup = {...task, id:undefined, title:task.title+' (副本)', subtasks:task.subtasks.map(s=>({...s}))};
+      createTask(dup);
+      toast('已复制','success');
+      break;
+    case 'timer': toggleTimer(id); break;
+    case 'moveLeft': {
+      const idx = COLUMNS.findIndex(c=>c.id===task.column);
+      if (idx>0) moveTask(id, COLUMNS[idx-1].id, 0);
+      break;
+    }
+    case 'moveRight': {
+      const idx = COLUMNS.findIndex(c=>c.id===task.column);
+      if (idx<COLUMNS.length-1) moveTask(id, COLUMNS[idx+1].id, 0);
+      break;
+    }
+    case 'delete':
+      deleteTask(id);
+      toast('已删除','error');
+      break;
+  }
+}
+
+// ===== Modal =====
+function openModal(column) {
+  state.editingId = null;
+  document.getElementById('modalTitle').textContent = '新建任务';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDesc').value = '';
+  document.getElementById('taskPriority').value = 'medium';
+  document.getElementById('taskDue').value = '';
+  document.getElementById('taskAssignee').value = '';
+  document.getElementById('taskEstimate').value = '';
+  document.getElementById('subtaskList').innerHTML = '';
+  document.querySelectorAll('.label-option').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('taskModal').classList.add('active');
+  document.getElementById('taskTitle').focus();
+  // store target column
+  state._modalColumn = column || 'backlog';
+}
+
+function editTask(id) {
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  state.editingId = id;
+  document.getElementById('modalTitle').textContent = '编辑任务';
+  document.getElementById('taskTitle').value = task.title;
+  document.getElementById('taskDesc').value = task.desc;
+  document.getElementById('taskPriority').value = task.priority;
+  document.getElementById('taskDue').value = task.due;
+  document.getElementById('taskAssignee').value = task.assignee;
+  document.getElementById('taskEstimate').value = task.estimate || '';
+  // labels
+  document.querySelectorAll('.label-option').forEach(el=>{
+    el.classList.toggle('selected', task.labels.includes(el.dataset.label));
+  });
+  // subtasks
+  renderSubtasks(task.subtasks);
+  state._modalColumn = task.column;
+  document.getElementById('taskModal').classList.add('active');
+  document.getElementById('taskTitle').focus();
+}
+
+function closeModal() {
+  document.getElementById('taskModal').classList.remove('active');
+  state.editingId = null;
+}
+
+function saveTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) { toast('请输入任务标题','error'); return; }
+  const labels = [...document.querySelectorAll('.label-option.selected')].map(el=>el.dataset.label);
+  const subtasks = [...document.querySelectorAll('#subtaskList .subtask-item')].map(el=>({
+    text: el.querySelector('span').textContent,
+    done: el.querySelector('input').checked
+  }));
+  const data = {
+    title,
+    desc: document.getElementById('taskDesc').value.trim(),
+    priority: document.getElementById('taskPriority').value,
+    due: document.getElementById('taskDue').value,
+    assignee: document.getElementById('taskAssignee').value,
+    estimate: parseFloat(document.getElementById('taskEstimate').value) || 0,
+    labels,
+    subtasks,
+    column: state._modalColumn
+  };
+  if (state.editingId) {
+    updateTask(state.editingId, data);
+    toast('任务已更新','success');
+  } else {
+    createTask(data);
+    toast('任务已创建','success');
+  }
+  closeModal();
+}
+
+function quickAdd(colId) {
+  openModal(colId);
+}
+
+// ===== Subtasks =====
+function renderSubtasks(subtasks) {
+  const list = document.getElementById('subtaskList');
+  list.innerHTML = (subtasks||[]).map((s,i)=>`
+    <li class="subtask-item">
+      <input type="checkbox" ${s.done?'checked':''} />
+      <span>${esc(s.text)}</span>
+      <button class="remove-subtask" onclick="this.parentElement.remove()">✕</button>
+    </li>
+  `).join('');
+}
+
+function addSubtask() {
+  const input = document.getElementById('newSubtask');
+  const text = input.value.trim();
+  if (!text) return;
+  const li = document.createElement('li');
+  li.className = 'subtask-item';
+  li.innerHTML = `<input type="checkbox"/><span>${esc(text)}</span><button class="remove-subtask" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('subtaskList').appendChild(li);
+  input.value = '';
+  input.focus();
+}
+
+function toggleLabel(el) { el.classList.toggle('selected'); }
+
+// ===== Filter =====
+let filterActive = false;
+function toggleFilter() {
+  filterActive = !filterActive;
+  if (filterActive) {
+    // cycle through priorities
+    const priorities = [null,'high','medium','low'];
+    const idx = priorities.indexOf(state.filter.priority);
+    state.filter.priority = priorities[(idx+1)%priorities.length];
+    toast(state.filter.priority ? `筛选: ${state.filter.priority} 优先级` : '清除筛选','info');
+  }
+  render();
+}
+
+// ===== Search =====
+document.getElementById('searchInput').addEventListener('input', e=>{
+  state.filter.search = e.target.value;
+  render();
+});
+
+// ===== Export / Import =====
+function exportData() {
+  const blob = new Blob([JSON.stringify({tasks:state.tasks,nextId:state.nextId},null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `taskflow-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('导出成功','success');
+}
+function importData() { document.getElementById('importFile').click(); }
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.tasks) {
+        pushHistory();
+        state.tasks = data.tasks;
+        state.nextId = data.nextId || state.tasks.length+1;
+        save(); render();
+        toast(`导入成功 (${data.tasks.length} 个任务)`,'success');
+      }
+    } catch(err) { toast('导入失败: 无效的JSON','error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ===== Toast =====
+function toast(msg, type='info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 2500);
+}
+
+// ===== Helpers =====
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function formatDate(d) { const dt=new Date(d); return `${dt.getMonth()+1}/${dt.getDate()}`; }
+function labelText(l) { return {bug:'Bug',feature:'Feature',urgent:'Urgent',design:'Design',perf:'Perf'}[l]||l; }
+
+// ===== Keyboard Shortcuts =====
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') { closeModal(); document.getElementById('contextMenu').classList.remove('active'); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  if (e.key==='Enter' && document.getElementById('newSubtask')===document.activeElement) { addSubtask(); }
+  if (e.key==='Enter' && (e.ctrlKey||e.metaKey) && document.getElementById('taskModal').classList.contains('active')) { saveTask(); }
+});
+
+// ===== Demo Data =====
+function seedDemoData() {
+  if (state.tasks.length) return;
+  const demos = [
+    { title:'实现虚拟滚动列表组件', desc:'支持10万+数据量，动态行高，滚动性能优化', column:'inprogress', priority:'high', labels:['feature','perf'], assignee:'张三', due:'2026-04-20', estimate:16, subtasks:[{text:'计算可视区域',done:true},{text:'实现缓冲区渲染',done:true},{text:'动态行高测量',done:false},{text:'滚动事件节流',done:false}] },
+    { title:'修复拖拽排序闪烁问题', desc:'Safari 下拖拽时 DOM 节点闪烁', column:'todo', priority:'high', labels:['bug'], assignee:'李四', due:'2026-04-18', estimate:4 },
+    { title:'设计暗色主题色板', desc:'包含 primary/secondary/surface/error 完整色阶', column:'review', priority:'medium', labels:['design'], assignee:'王五', estimate:8 },
+    { title:'WebSocket 实时协作', desc:'多人同时编辑看板，冲突解决策略', column:'backlog', priority:'medium', labels:['feature'], assignee:'赵六', estimate:40, subtasks:[{text:'消息协议设计',done:false},{text:'服务端广播',done:false},{text:'客户端状态同步',done:false},{text:'离线队列',done:false},{text:'冲突合并',done:false}] },
+    { title:'性能审计 Lighthouse', desc:'Core Web Vitals 全部达到绿色', column:'todo', priority:'low', labels:['perf'], assignee:'孙七', estimate:6 },
+    { title:'国际化 i18n 支持', desc:'中英日三语言切换', column:'backlog', priority:'low', labels:['feature'], due:'2026-05-01', estimate:20 },
+    { title:'紧急修复 XSS 漏洞', desc:'富文本编辑器 HTML 注入', column:'inprogress', priority:'high', labels:['bug','urgent'], assignee:'张三', due:'2026-04-17', estimate:2 },
+    { title:'重构状态管理架构', desc:'从 Context 迁移到 Zustand，减少不必要重渲染', column:'done', priority:'medium', labels:['perf'], assignee:'李四', estimate:12, subtasks:[{text:'拆分 store',done:true},{text:'迁移组件',done:true},{text:'性能对比测试',done:true}] },
+    { title:'Figma 设计稿对齐', desc:'逐像素对比并修复差异', column:'review', priority:'medium', labels:['design'], assignee:'王五', due:'2026-04-19', estimate:6 },
+    { title:'E2E 自动化测试覆盖', desc:'Playwright 覆盖核心流程，CI 集成', column:'backlog', priority:'low', labels:['feature'], estimate:24, subtasks:[{text:'登录流程',done:false},{text:'CRUD操作',done:false},{text:'拖拽排序',done:false},{text:'导出导入',done:false}] },
+  ];
+  demos.forEach(d=>createTask(d));
+  state.history = []; // clear seed history
+}
+
+// ===== Init =====
+load();
+seedDemoData();
+render();
+</script>
+</body>
+</html>
